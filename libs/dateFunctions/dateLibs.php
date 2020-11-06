@@ -4,7 +4,7 @@
         $result = $newDate - $date;
         $minut = round($result / 60);
         if($minut > 59){
-            $hours = $minut / 60;
+            $hours = round($minut / 60);
             return $hours.' soat';
         }
         return $minut.' minut';

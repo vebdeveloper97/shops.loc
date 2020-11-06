@@ -21,15 +21,37 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             ['class' => 'yii\grid\SerialColumn'],
 
-            'id',
             'doc_number',
             'doc_type',
-            'created_at',
-            'updated_at',
-            //'created_by',
-            //'updated_by',
 
-            ['class' => 'yii\grid\ActionColumn'],
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{view} {update} {delete}',
+                'buttons' => [
+                    'view' => function($url,$model,$key){
+                        return Html::a('<i class="glyphicon glyphicon-eye-open"></i>', [$url, 'slug' => $this->context->slug]);
+                    },
+                    'update' => function($url){
+                        return Html::a('<i class="glyphicon glyphicon-pencil"></i>', [$url, 'slug' => $this->context->slug]);
+                    },
+                    'delete' => function($url){
+                        return Html::a('<i class="glyphicon glyphicon-trash"></i>', [$url, 'slug' => $this->context->slug], [
+                            'title' => Yii::t('app', 'Delete'),
+                            'data-confirm' => Yii::t('yii', 'Are you sure you want to delete?'),
+                            'data-method' => 'post', 'data-pjax' => '0',
+                        ]);
+                    },
+                ],
+                'visibleButtons' => [
+                    'update' => function($model) {
+                        return
+                            $model->status < $model::STATUS_SAVED && $model->status !== 2;
+                    },
+                    'delete' => function($model) {
+                        return $model->status < $model::STATUS_SAVED && $model->status !== 2;
+                    },
+                ],
+            ],
         ],
     ]); ?>
 

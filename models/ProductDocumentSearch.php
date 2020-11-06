@@ -38,7 +38,7 @@ class ProductDocumentSearch extends ProductDocument
      *
      * @return ActiveDataProvider
      */
-    public function search($params)
+    public function search($params,$type=null)
     {
         $query = ProductDocument::find();
 
@@ -59,14 +59,11 @@ class ProductDocumentSearch extends ProductDocument
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'doc_type' => $this->doc_type,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
-            'created_by' => $this->created_by,
-            'updated_by' => $this->updated_by,
+            'doc_type' => $type,
         ]);
 
-        $query->andFilterWhere(['like', 'doc_number', $this->doc_number]);
+        $query->andFilterWhere(['like', 'doc_number', $this->doc_number])
+            ->andFilterWhere(['!=', 'status', BaseModel::STATUS_DELETE]);
 
         return $dataProvider;
     }

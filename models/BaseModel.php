@@ -11,6 +11,7 @@ class BaseModel extends ActiveRecord
     const STATUS_ACTIVE = 1;
     const STATUS_NO_ACTIVE = 2;
     const STATUS_SAVED = 3;
+    const STATUS_DELETE = 4;
 
     public function behaviors()
     {

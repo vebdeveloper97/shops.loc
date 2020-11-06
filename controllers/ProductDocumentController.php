@@ -2,7 +2,10 @@
 
 namespace app\controllers;
 
+use app\models\BaseModel;
+use app\models\Product;
 use app\models\ProductDocumentItems;
+use app\models\ProductItemsBalance;
 use app\modules\wms\models\WmsDocument;
 use Yii;
 use app\models\ProductDocument;
@@ -13,6 +16,8 @@ use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\Response;
+use function Symfony\Component\String\s;
 
 /**
  * ProductDocumentController implements the CRUD actions for ProductDocument model.
@@ -69,7 +74,8 @@ class ProductDocumentController extends Controller
     public function actionIndex()
     {
         $searchModel = new ProductDocumentSearch();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $type = ProductDocument::hasDocTypeLabel($this->slug);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams,$type);
 
         return $this->render($this->slug.'/index', [
             'searchModel' => $searchModel,
@@ -85,9 +91,174 @@ class ProductDocumentController extends Controller
      */
     public function actionView($id)
     {
+        $model = $this->findModel($id,ProductDocument::hasDocTypeLabel($this->slug));
+        $modelItems = $model->productDocumentItems?$model->productDocumentItems:[new ProductDocumentItems()];
         return $this->render($this->slug.'/view', [
-            'model' => $this->findModel($id),
+            'model' => $model,
+            'modelItems' => $modelItems
         ]);
+    }
+
+
+    /**
+     * Save And Finish
+     * @param integer $id
+     * return mixed
+     * */
+    public function actionSaveAndFinish()
+    {
+        $id = Yii::$app->request->get('id');
+        $type = ProductDocument::hasDocTypeLabel($this->slug);
+        $model = ProductDocument::findOne(['id' => $id, 'doc_type' => $type]);
+        $modelItems = $model->productDocumentItems?$model->productDocumentItems:false;
+        if($type == ProductDocument::DOCUMENT_TYPE_INCOMING){
+            $transaction = Yii::$app->db->beginTransaction();
+            $saved = false;
+            try{
+                if($model && $modelItems){
+                    foreach ($modelItems as $modelItem) {
+                        $itemBalance = new ProductItemsBalance();
+                        $balance = ProductItemsBalance::find()
+                            ->where(['product_id' => $modelItem->product_id])
+                            ->andWhere(['type' => $type])
+                            ->orderBy(['id' => SORT_DESC])
+                            ->one();
+                        $isBool = $balance?true:false;
+                        if($isBool){
+                            $itemBalance->setAttributes([
+                                'product_id' => $modelItem->product_id,
+                                'product_doc_id' => $modelItem->product_doc_id,
+                                'product_doc_items_id' => $modelItem->id,
+                                'quantity' => $modelItem->quantity,
+                                'amount' => $modelItem->quantity + $balance->quantity,
+                                'type' => $type
+                            ]);
+                            if($itemBalance->save()){
+                                $saved = true;
+                                unset($itemBalance);
+                            }
+                            else{
+                                $saved = false;
+                                break;
+                            }
+                        }
+                        else{
+                            $itemBalance->setAttributes([
+                                'product_id' => $modelItem->product_id,
+                                'product_doc_id' => $modelItem->product_doc_id,
+                                'product_doc_items_id' => $modelItem->id,
+                                'quantity' => $modelItem->quantity,
+                                'amount' => $modelItem->quantity,
+                                'type' => $type
+                            ]);
+                            if($itemBalance->save()){
+                                $saved = true;
+                                unset($itemBalance);
+                            }
+                            else{
+                                $saved = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if($saved){
+                    $model->status = BaseModel::STATUS_SAVED;
+                    $saved = $model->save()?true:false;
+                }
+
+                if($saved){
+                    $transaction->commit();
+                    Yii::$app->session->setFlash('success', 'Save and finish completed');
+                }
+                else{
+                    $transaction->rollBack();
+                    Yii::$app->session->setFlash('error', 'Save and finish failed');
+                }
+
+                return $this->redirect(['index', 'slug' => $this->slug]);
+            }
+            catch(\Exception $e){
+                Yii::info('error message '.$e->getMessage(),'save');
+            }
+        }
+        elseif($type == ProductDocument::DOCUMENT_TYPE_SELLING){
+            $transaction = Yii::$app->db->beginTransaction();
+            $saved = false;
+            try{
+                if($model && $modelItems){
+                    foreach ($modelItems as $modelItem) {
+                        $itemBalance = new ProductItemsBalance();
+                        $balance = ProductItemsBalance::find()
+                            ->where(['product_id' => $modelItem->product_id])
+                            ->orderBy(['id' => SORT_DESC])
+                            ->one();
+                        $isBool = $balance?true:false;
+                        if($isBool){
+                            if($balance->amount >= $modelItem->quantity){
+                                $itemBalance->setAttributes([
+                                    'product_id' => $modelItem->product_id,
+                                    'product_doc_id' => $modelItem->product_doc_id,
+                                    'product_doc_items_id' => $modelItem->id,
+                                    'quantity' => $modelItem->quantity,
+                                    'amount' => $balance->amount - $modelItem->quantity,
+                                    'type' => $type
+                                ]);
+
+                                $newColumn = new ProductItemsBalance();
+                                $newColumn->setAttributes([
+                                    'product_id' => $modelItem->product_id,
+                                    'product_doc_id' => $modelItem->product_doc_id,
+                                    'product_doc_items_id' => $modelItem->id,
+                                    'quantity' => $modelItem->quantity,
+                                    'amount' => -1 * $modelItem->quantity,
+                                    'type' => $type
+                                ]);
+                                if($newColumn->save() && $itemBalance->save()){
+                                    $saved = true;
+                                    unset($itemBalance);
+                                    unset($newColumn);
+                                }
+                                else{
+                                    $saved = false;
+                                    break;
+                                }
+                            }
+                            else{
+                                Yii::$app->session->setFlash('error', Yii::t('app', 'Large quantities of products were introduced.'));
+                                $saved = false;
+                                break;
+                            }
+                        }
+                        else{
+                            Yii::$app->session->setFlash('error', Yii::t('app', 'No product found'));
+                        }
+                    }
+                }
+
+                if($saved){
+                    $model->status = BaseModel::STATUS_SAVED;
+                    $saved = $model->save()?true:false;
+                    if(!$saved){
+                        Yii::$app->session->setFlash('error', Yii::t('app', 'Save and finish failed'));
+                    }
+                }
+
+                if($saved){
+                    $transaction->commit();
+                    Yii::$app->session->setFlash('success', 'Save and finish completed');
+                }
+                else{
+                    $transaction->rollBack();
+                }
+
+                return $this->redirect(['index', 'slug' => $this->slug]);
+            }
+            catch(\Exception $e){
+                Yii::info('error message '.$e->getMessage(),'save');
+            }
+        }
     }
 
     /**
@@ -106,7 +277,7 @@ class ProductDocumentController extends Controller
         $docType = ProductDocument::hasDocTypeLabel($this->slug);
 
         if ($model->load(Yii::$app->request->post())) {
-            if($docType == ProductDocument::DOCUMENT_TYPE_INCOMING){
+            if($docType == ProductDocument::DOCUMENT_TYPE_INCOMING || $docType == ProductDocument::DOCUMENT_TYPE_SELLING){
                 $model->doc_type = $docType;
                 $model->date = date('Y-m-d', strtotime($model->date));
                 $data = Yii::$app->request->post();
@@ -123,7 +294,8 @@ class ProductDocumentController extends Controller
                                     'product_id' => $productItem['product_id'],
                                     'incoming_price' => $productItem['incoming_price'],
                                     'quantity' => $productItem['quantity'],
-                                    'product_doc_id' => $model->id
+                                    'product_doc_id' => $model->id,
+                                    'party_number' => $productItem['party_number'],
                                 ]);
                                 if($items->save()){
                                     $saved = true;
@@ -140,7 +312,7 @@ class ProductDocumentController extends Controller
                     if($saved){
                         $transaction->commit();
                         Yii::$app->session->setFlash('success', 'Saqlandi');
-                        return $this->redirect(['index', 'slug' => $this->slug]);
+                        return $this->redirect(['view', 'id'=>$model->id, 'slug' => $this->slug]);
                     }
                     else{
                         $transaction->rollBack();
@@ -151,9 +323,6 @@ class ProductDocumentController extends Controller
                 catch(\Exception $e){
                     Yii::info('error message '.$e->getMessage(), 'save');
                 }
-
-            }
-            elseif($docType == ProductDocument::DOCUMENT_TYPE_SELLING){
 
             }
 
@@ -175,14 +344,70 @@ class ProductDocumentController extends Controller
      */
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        $docType = ProductDocument::hasDocTypeLabel($this->slug);
+        $model = $this->findModel($id,$docType);
+        $modelItems = $model->productDocumentItems?$model->productDocumentItems:[new ProductDocumentItems()];
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if($model->load(Yii::$app->request->post())) {
+            if($docType == ProductDocument::DOCUMENT_TYPE_INCOMING || $docType == ProductDocument::DOCUMENT_TYPE_SELLING){
+                $transaction = Yii::$app->db->beginTransaction();
+                $saved = false;
+                try{
+                    $data = Yii::$app->request->post();
+                    if(!empty($data['ProductDocumentItems'])){
+                        foreach ($modelItems as $modelItem) {
+                            $modelItem->delete();
+                        }
+                    }
+                    $model->date = date('Y-m-d', strtotime($model->date));
+                    $saved = $model->save()?true:false;
+                    if($saved){
+                        $productItems = $data['ProductDocumentItems'];
+                        if($productItems){
+                            foreach ($productItems as $productItem) {
+                                $items = new ProductDocumentItems();
+                                $items->setAttributes([
+                                    'product_id' => $productItem['product_id'],
+                                    'incoming_price' => $productItem['incoming_price'],
+                                    'quantity' => $productItem['quantity'],
+                                    'product_doc_id' => $model->id,
+                                    'party_number' => $productItem['party_number'],
+                                ]);
+                                if($items->save()){
+                                    $saved = true;
+                                    unset($items);
+                                }
+                                else{
+                                    $saved = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if($saved){
+                        $transaction->commit();
+                        Yii::$app->session->setFlash('success', 'Saqlandi');
+                        return $this->redirect(['view', 'id'=>$model->id, 'slug' => $this->slug]);
+                    }
+                    else{
+                        $transaction->rollBack();
+                        Yii::$app->session->setFlash('error', 'Saqlanmadi');
+                        return $this->redirect(Yii::$app->request->referrer);
+                    }
+                }
+                catch(\Exception $e){
+                    Yii::info('error message '.$e->getMessage(),'save');
+                }
+            }
+            elseif($docType == ProductDocument::DOCUMENT_TYPE_SELLING){
+
+            }
         }
 
         return $this->render($this->slug.'/update', [
             'model' => $model,
+            'modelItems' => $modelItems
         ]);
     }
 
@@ -195,9 +420,30 @@ class ProductDocumentController extends Controller
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        $model = $this->findModel($id,ProductDocument::hasDocTypeLabel($this->slug));
+        $model->status = BaseModel::STATUS_DELETE;
+        $saved = $model->save()?true:false;
+        if($saved)
+            return $this->redirect(['index', 'slug' => $this->slug]);
+        else
+            return $this->redirect(Yii::$app->request->referrer);
+    }
 
-        return $this->redirect(['index']);
+    public function actionGetPartyNumber()
+    {
+        if(Yii::$app->request->isAjax){
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            $id = Yii::$app->request->get('name');
+            $product = Product::findOne($id);
+            if(!empty($product)){
+                $response['status'] = true;
+                $response['part_number'] = $product->partiy_number;
+            }
+            else{
+                $response['status'] = false;
+            }
+            return $response;
+        }
     }
 
     /**
@@ -207,9 +453,9 @@ class ProductDocumentController extends Controller
      * @return ProductDocument the loaded model
      * @throws NotFoundHttpException if the model cannot be found
      */
-    protected function findModel($id)
+    protected function findModel($id,$type)
     {
-        if (($model = ProductDocument::findOne($id)) !== null) {
+        if (($model = ProductDocument::findOne(['id' => $id, 'doc_type' => $type])) !== null) {
             return $model;
         }
 
