@@ -17,7 +17,7 @@ use yii\web\IdentityInterface;
  * @property int|null $created_by
  * @property int|null $updated_by
  */
-class User extends \yii\db\ActiveRecord implements IdentityInterface
+class User extends BaseModel implements IdentityInterface
 {
     /**
      * {@inheritdoc}
@@ -56,6 +56,19 @@ class User extends \yii\db\ActiveRecord implements IdentityInterface
             'updated_by' => Yii::t('app', 'Updated By'),
         ];
     }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if(empty($this->status)){
+                $this->status = self::STATUS_ACTIVE;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * {@inheritdoc}
      */

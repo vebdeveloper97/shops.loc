@@ -22,7 +22,7 @@ use Yii;
  * @property Product $product
  * @property ProductItemsBalance[] $productItemsBalances
  */
-class ProductDocumentItems extends \yii\db\ActiveRecord
+class ProductDocumentItems extends BaseModel
 {
     /**
      * {@inheritdoc}
@@ -65,6 +65,17 @@ class ProductDocumentItems extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if(empty($this->status)){
+                $this->status = self::STATUS_ACTIVE;
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
     /**
      * Gets query for [[ProductDoc]].
      *

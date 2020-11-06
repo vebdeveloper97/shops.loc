@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\helpers\VarDumper;
 
 /**
  * This is the model class for table "product_document".
@@ -18,7 +19,7 @@ use Yii;
  * @property ProductDocumentItems[] $productDocumentItems
  * @property ProductItemsBalance[] $productItemsBalances
  */
-class ProductDocument extends \yii\db\ActiveRecord
+class ProductDocument extends BaseModel
 {
     // yangi doc type yaratilsa, uni getDocTypeLabels() metodiga qo'shib qo'yish kerak
     const DOCUMENT_TYPE_INCOMING = 1;
@@ -42,7 +43,7 @@ class ProductDocument extends \yii\db\ActiveRecord
             [['doc_type', 'created_at', 'status', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['doc_number'], 'string', 'max' => 255],
             [['doc_number'], 'unique'],
-            [['date'], 'date'],
+            [['date'], 'date', 'skipOnEmpty' => false, 'format' => 'php:Y-m-d'],
         ];
     }
 
@@ -60,6 +61,21 @@ class ProductDocument extends \yii\db\ActiveRecord
             'created_by' => Yii::t('app', 'Created By'),
             'updated_by' => Yii::t('app', 'Updated By'),
         ];
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if(empty($this->status)){
+                $this->status = self::STATUS_ACTIVE;
+            }
+            if(!empty($this->date)){
+                $this->date = date('Y-m-d', strtotime($this->date));
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -86,15 +102,15 @@ class ProductDocument extends \yii\db\ActiveRecord
      * @param string $docTypeLabel
      * @return bool
      */
-    public static function hasDocTypeLabel(string $docTypeLabel): bool
+    public static function hasDocTypeLabel($docTypeLabel)
     {
-        return in_array($docTypeLabel, self::getDocTypeTokens());
+        return array_search($docTypeLabel, self::getDocTypeTokens());
     }
 
     /**
      * @return array
      */
-    public static function getDocTypeTokens(): array
+    public static function getDocTypeTokens()
     {
         return [
             self::DOCUMENT_TYPE_INCOMING => 'incoming',
@@ -102,4 +118,5 @@ class ProductDocument extends \yii\db\ActiveRecord
             self::DOCUMENT_TYPE_REPORT => 'report',
         ];
     }
+
 }

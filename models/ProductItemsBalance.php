@@ -22,7 +22,7 @@ use Yii;
  * @property ProductDocumentItems $productDocItems
  * @property Product $product
  */
-class ProductItemsBalance extends \yii\db\ActiveRecord
+class ProductItemsBalance extends BaseModel
 {
     /**
      * {@inheritdoc}
@@ -64,6 +64,18 @@ class ProductItemsBalance extends \yii\db\ActiveRecord
             'updated_at' => Yii::t('app', 'Updated At'),
             'created_by' => Yii::t('app', 'Created By'),
         ];
+    }
+
+    public function beforeSave($insert)
+    {
+        if (parent::beforeSave($insert)) {
+            if(empty($this->status)){
+                $this->status = self::STATUS_ACTIVE;
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

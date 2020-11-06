@@ -26,6 +26,9 @@ use app\models\Product;
         </div>
         <div class="col-sm-6">
             <?= $form->field($model, 'date')->widget(\kartik\date\DatePicker::class, [
+                'options' => [
+                    'value' => date('d.m.yy'),
+                ],
                 'pluginOptions' => [
                     'autoclose'=>true,
                     'format' => 'dd.mm.yyyy'
@@ -89,11 +92,11 @@ use app\models\Product;
                                 'allowClear' => true,
                             ]
                         ],
-                        'title' => Yii::t('app', 'Material'),
+                        'title' => Yii::t('app', 'Products'),
                     ],
                     [
                         'name' => 'incoming_price',
-                        'title' => Yii::t('app', 'Incoming Price'),
+                        'title' => Yii::t('app', 'Incoming Price').'<span style="color: orangered"> $</span>',
                         'options' => [
                             'style' => 'width: 300px',
                         ],

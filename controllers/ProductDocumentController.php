@@ -100,12 +100,64 @@ class ProductDocumentController extends Controller
         $model = new ProductDocument();
         $modelItems = [new ProductDocumentItems()];
 
-        $isTrue = ProductDocument::find()->orderBy(['id' => SORT_DESC])->one()?ProductDocument::find()->orderBy(['sort' => SORT_DESC])->one():false;
+        $isTrue = ProductDocument::find()->orderBy(['id' => SORT_DESC])->one()?ProductDocument::find()->orderBy(['id' => SORT_DESC])->one():false;
         $listId = $isTrue?$isTrue['id']+1:1;
         $model->doc_number = "PO-".$listId.'/'.date('m.d.Y');
-        $model->date = date('d.m.Y');
+        $docType = ProductDocument::hasDocTypeLabel($this->slug);
+
         if ($model->load(Yii::$app->request->post())) {
-            return $this->redirect(['view', 'id' => $model->id]);
+            if($docType == ProductDocument::DOCUMENT_TYPE_INCOMING){
+                $model->doc_type = $docType;
+                $model->date = date('Y-m-d', strtotime($model->date));
+                $data = Yii::$app->request->post();
+                $transaction = Yii::$app->db->beginTransaction();
+                $saved = false;
+                try{
+                    $saved = $model->save()?true:false;
+                    if($saved){
+                        $productItems = $data['ProductDocumentItems'];
+                        if($productItems){
+                            foreach ($productItems as $productItem) {
+                                $items = new ProductDocumentItems();
+                                $items->setAttributes([
+                                    'product_id' => $productItem['product_id'],
+                                    'incoming_price' => $productItem['incoming_price'],
+                                    'quantity' => $productItem['quantity'],
+                                    'product_doc_id' => $model->id
+                                ]);
+                                if($items->save()){
+                                    $saved = true;
+                                    unset($items);
+                                }
+                                else{
+                                    $saved = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if($saved){
+                        $transaction->commit();
+                        Yii::$app->session->setFlash('success', 'Saqlandi');
+                        return $this->redirect(['index', 'slug' => $this->slug]);
+                    }
+                    else{
+                        $transaction->rollBack();
+                        Yii::$app->session->setFlash('error', 'Saqlanmadi');
+                        return $this->redirect(Yii::$app->request->referrer);
+                    }
+                }
+                catch(\Exception $e){
+                    Yii::info('error message '.$e->getMessage(), 'save');
+                }
+
+            }
+            elseif($docType == ProductDocument::DOCUMENT_TYPE_SELLING){
+
+            }
+
+            return $this->redirect(['view', 'slug' => $this->slug, 'id' => $model->id]);
         }
 
         return $this->render($this->slug.'/create', [

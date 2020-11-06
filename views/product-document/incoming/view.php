@@ -31,8 +31,18 @@ $this->params['breadcrumbs'][] = $this->title;
             'id',
             'doc_number',
             'doc_type',
-            'created_at',
-            'updated_at',
+            [
+                'attribute' => 'created_at',
+                'value' => function($model){
+                    return dateFormatter($model->created_at);
+                }
+            ],
+            [
+                'attribute' => 'updated_at',
+                'value' => function($model){
+                    return dateFormatter($model->updated_at);
+                }
+            ],
             'created_by',
             'updated_by',
         ],

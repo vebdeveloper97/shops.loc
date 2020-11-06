@@ -46,6 +46,12 @@ $config = [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'categories' => ['save'],
+                    'logFile' => '@runtime/logs/save.log',
+                    'logVars' => []
+                ],
             ],
         ],
         'db' => $db,

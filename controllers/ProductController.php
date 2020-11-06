@@ -8,6 +8,7 @@ use app\models\ProductSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use yii\web\Response;
 
 /**
  * ProductController implements the CRUD actions for Product model.
@@ -79,6 +80,7 @@ class ProductController extends Controller
         return $this->render('create', [
             'model' => $model,
         ]);
+
     }
 
     /**
