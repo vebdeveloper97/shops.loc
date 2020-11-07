@@ -67,10 +67,29 @@ class ProductController extends Controller
     {
         $model = new Product();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
+        if ($model->load(Yii::$app->request->post())) {
+            if(Yii::$app->request->isAjax){
+                if($model->load(Yii::$app->request->post())){
+                    Yii::$app->response->format = Response::FORMAT_JSON;
+                    $response['success'] = false;
+                    $saved = $model->save();
+                    if($saved){
+                        $response['success'] = true;
+                        $response['title'] = $model->name;
+                        $response['selected_id'] = $model->id;
+                    }
+                    else{
+                        $response['success'] = false;
+                    }
+                    return $response;
+                }
 
+            }
+            else{
+                $model->save();
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
+        }
         if(Yii::$app->request->isAjax){
             return $this->renderAjax('create', [
                 'model' => $model,

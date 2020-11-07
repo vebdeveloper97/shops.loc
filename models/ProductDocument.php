@@ -25,6 +25,14 @@ class ProductDocument extends BaseModel
     const DOCUMENT_TYPE_INCOMING = 1;
     const DOCUMENT_TYPE_SELLING = 2;
     const DOCUMENT_TYPE_REPORT = 3;
+    const DOCUMENT_TYPE_REPORT_INCOMING = 4;
+    const DOCUMENT_TYPE_REPORT_SELLING = 5;
+
+    /** Search fields*/
+    public $start_date;
+    public $end_date;
+    public $product_id;
+    public $party_number;
     /**
      * {@inheritdoc}
      */
@@ -44,6 +52,9 @@ class ProductDocument extends BaseModel
             [['doc_number'], 'string', 'max' => 255],
             [['doc_number'], 'unique'],
             [['date'], 'date', 'skipOnEmpty' => false, 'format' => 'php:Y-m-d'],
+            /** Search Fields */
+            [['start_date', 'end_date'], 'date'],
+            [['product_id', 'party_number'], 'integer']
         ];
     }
 
@@ -60,6 +71,11 @@ class ProductDocument extends BaseModel
             'updated_at' => Yii::t('app', 'Updated At'),
             'created_by' => Yii::t('app', 'Created By'),
             'updated_by' => Yii::t('app', 'Updated By'),
+            'date' => Yii::t('app', 'Date'),
+            'start_date' => Yii::t('app', 'Start Date'),
+            'end_date' => Yii::t('app', 'End Date'),
+            'party_number' => Yii::t('app', 'Party Number'),
+            'product_id' => Yii::t('app', 'Product name'),
         ];
     }
 
@@ -116,6 +132,8 @@ class ProductDocument extends BaseModel
             self::DOCUMENT_TYPE_INCOMING => 'incoming',
             self::DOCUMENT_TYPE_SELLING => 'selling',
             self::DOCUMENT_TYPE_REPORT => 'report',
+            self::DOCUMENT_TYPE_REPORT_INCOMING => 'report_incoming',
+            self::DOCUMENT_TYPE_REPORT_SELLING => 'report_selling',
         ];
     }
 

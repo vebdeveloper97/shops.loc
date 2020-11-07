@@ -5,12 +5,16 @@ namespace app\models;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use app\models\ProductDocument;
+use yii\data\SqlDataProvider;
+use yii\helpers\VarDumper;
 
 /**
  * ProductDocumentSearch represents the model behind the search form of `app\models\ProductDocument`.
  */
 class ProductDocumentSearch extends ProductDocument
 {
+    public $per_page;
+    public $page;
     /**
      * {@inheritdoc}
      */
@@ -66,5 +70,57 @@ class ProductDocumentSearch extends ProductDocument
             ->andFilterWhere(['!=', 'status', BaseModel::STATUS_DELETE]);
 
         return $dataProvider;
+    }
+
+    /**
+     * Search
+     * $param array $params
+     *
+     * @return ActiveDataProvider
+     * */
+    public function searchReport($params, $type)
+    {
+        if($params['ProductDocument'] && $type){
+            $product = $params['ProductDocument'];
+            $start_date = $product['start_date'];
+            $end_date = $product['end_date'];
+            $product_id = $product['product_id'];
+            $party_number = $product['party_number'];
+            $sql = "
+                SELECT p.name as name, p.partiy_number as pnumber, pd.doc_number as doc_number, pd.date as date, pib.amount as amount, pib.quantity as quantity,
+                pd.doc_type as type from product p
+                inner join product_document_items pdi on pdi.product_id = p.id
+                inner join product_items_balance pib on pib.product_doc_items_id = pdi.id
+                inner join product_document pd on pd.id = pdi.product_doc_id
+                WHERE pd.doc_type = {$type}            
+            ";
+            if(!empty($start_date))
+            {
+                $start_date = date('Y-m-d', strtotime($start_date));
+                $sql .= " AND pd.date >= '{$start_date}'";
+            }
+            if(!empty($end_date))
+            {
+                $end_date = date('Y-m-d', strtotime($end_date));
+                $sql .= " AND pd.date <= '{$end_date}'";
+            }
+            if(!empty($product_id))
+                $sql .= " AND pib.product_id = $product_id";
+            if(!empty($party_number))
+                $sql .= " AND p.partiy_number = {$party_number}";
+            $sql .= " ORDER BY pib.id ASC";
+            $query = \Yii::$app->db->createCommand($sql)->queryAll();
+            $count = count($query);
+            $dataProvider = new SqlDataProvider([
+                'sql' => $sql,
+                'totalCount' => $count,
+            ]);
+
+
+            if(!empty($dataProvider))
+                return $dataProvider;
+
+            return false;
+        }
     }
 }

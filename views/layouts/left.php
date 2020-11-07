@@ -58,11 +58,19 @@
                             [
                                 'label' => 'Hisobot',
                                 'icon' => 'bars',
-                                'url' => ['product-document/report/index'],
-                                'active' =>
-                                    $controller == 'product-document'
-                                    && $slug == 'report',
+                                'items' => [
+                                    [
+                                        'label' => 'Maxsulot kirim hisoboti',
+                                        'url' => ['product-document/report_incoming/index'],
+                                        'active' => $slug == 'report_incoming',
+                                    ],
+                                    [
+                                        'label' => 'Maxsulot chiqim hisoboti',
+                                        'url' => ['product-document/report_selling/index'],
+                                        'active' => $slug == 'report_selling',
+                                    ],
                                 ],
+                            ],
                             [
                                 'label' => 'Maxsulot',
                                 'icon' => 'plus',

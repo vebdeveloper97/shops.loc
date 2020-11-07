@@ -10,6 +10,8 @@ use app\modules\wms\models\WmsDocument;
 use Yii;
 use app\models\ProductDocument;
 use app\models\ProductDocumentSearch;
+use yii\bootstrap\Html;
+use yii\data\ActiveDataProvider;
 use yii\helpers\VarDumper;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
@@ -37,6 +39,7 @@ class ProductDocumentController extends Controller
     {
         if (parent::beforeAction($action)) {
             $slug = Yii::$app->request->get('slug');
+//            VarDumper::dump($slug,10,true);die;
             $flag = false;
             if (!empty($slug)) {
                 if ( ProductDocument::hasDocTypeLabel($slug) ) {
@@ -77,9 +80,51 @@ class ProductDocumentController extends Controller
         $type = ProductDocument::hasDocTypeLabel($this->slug);
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams,$type);
 
+        if($type == ProductDocument::DOCUMENT_TYPE_REPORT_INCOMING){
+            $model = new ProductDocument();
+            if($model->load(Yii::$app->request->post())){
+                $data = Yii::$app->request->post();
+                $data = $searchModel->searchReport($data,ProductDocument::DOCUMENT_TYPE_INCOMING);
+
+                if($data){
+                    return $this->render($this->slug.'/index', [
+                        'searchModel' => $searchModel,
+                        'dataProvider' => $dataProvider,
+                        'model' => $model,
+                        'sqldataprovider' => $data
+                    ]);
+                }
+            }
+        }
+        elseif($type == ProductDocument::DOCUMENT_TYPE_REPORT_SELLING){
+            $model = new ProductDocument();
+            if($model->load(Yii::$app->request->post())){
+                $data = Yii::$app->request->post();
+                $available = null;
+                if(empty($data['product_id'])){
+                    $all = true;
+                    $available = ProductItemsBalance::find()->where(['type' => 2])->groupBy(['product_id'])->orderBy(['id' => SORT_DESC])->asArray()->all();
+                }
+                else $all = false;
+
+                $data = $searchModel->searchReport($data,ProductDocument::DOCUMENT_TYPE_SELLING);
+                if($data){
+                    return $this->render($this->slug.'/index', [
+                        'searchModel' => $searchModel,
+                        'dataProvider' => $dataProvider,
+                        'model' => $model,
+                        'sqldataprovider' => $data,
+                        'all' => $all,
+                        'available' => $available
+                    ]);
+                }
+            }
+        }
+
         return $this->render($this->slug.'/index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
+            'model' => $model
         ]);
     }
 
@@ -120,7 +165,6 @@ class ProductDocumentController extends Controller
                         $itemBalance = new ProductItemsBalance();
                         $balance = ProductItemsBalance::find()
                             ->where(['product_id' => $modelItem->product_id])
-                            ->andWhere(['type' => $type])
                             ->orderBy(['id' => SORT_DESC])
                             ->one();
                         $isBool = $balance?true:false;
@@ -130,7 +174,7 @@ class ProductDocumentController extends Controller
                                 'product_doc_id' => $modelItem->product_doc_id,
                                 'product_doc_items_id' => $modelItem->id,
                                 'quantity' => $modelItem->quantity,
-                                'amount' => $modelItem->quantity + $balance->quantity,
+                                'amount' => $modelItem->quantity + $balance->amount,
                                 'type' => $type
                             ]);
                             if($itemBalance->save()){
@@ -326,7 +370,7 @@ class ProductDocumentController extends Controller
 
             }
 
-            return $this->redirect(['view', 'slug' => $this->slug, 'id' => $model->id]);
+            return $this->redirect(Yii::$app->request->referrer);
         }
 
         return $this->render($this->slug.'/create', [

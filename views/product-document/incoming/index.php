@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'class' => 'yii\grid\ActionColumn',
                 'template' => '{view} {update} {delete}',
                 'buttons' => [
-                    'view' => function($url,$model,$key){
+                    'view' => function($url,$model,$key) {
                         return Html::a('<i class="glyphicon glyphicon-eye-open"></i>', [$url, 'slug' => $this->context->slug]);
                     },
                     'update' => function($url){
@@ -42,6 +42,22 @@ $this->params['breadcrumbs'][] = $this->title;
                         ]);
                     },
                 ],
+                'urlCreator' => function ($action, $model, $key, $index) {
+                    if ($action === 'view') {
+                        $url = $action.'?id='. $model->id;
+                        return $url;
+                    }
+
+                    if ($action === 'update') {
+                        $url =  $action.'?id='.$model->id;
+                        return $url;
+                    }
+                    if ($action === 'delete') {
+                        $url = $action.'?id='. $model->id;
+                        return $url;
+                    }
+
+                  },
                 'visibleButtons' => [
                     'update' => function($model) {
                         return

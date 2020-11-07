@@ -194,9 +194,6 @@ function formProcess() {
                 .done(function(data) {
                     if(data.success) {
                         const response = data;
-                        PNotify.defaults.styling = "bootstrap4";
-                        PNotify.defaults.delay = 2000;
-                        PNotify.alert({text:"Success",type:'success'});
                         modalForm.modal('hide');    
                         let newOption = new Option(response.title, response.selected_id, true, true);
                         $('#'+inputId).append(newOption).trigger('change');
@@ -204,9 +201,6 @@ function formProcess() {
                     } else if (data.validation) {
                         // server validation failed
                         yiiForm.yiiActiveForm('updateMessages', data.validation, true); // renders validation messages at appropriate places
-                        PNotify.defaults.styling = "bootstrap4";
-                        PNotify.defaults.delay = 3000;
-                        PNotify.alert({text:'Error',type:'error'});
                     } else {
                         // incorrect server response
                     }
@@ -242,6 +236,11 @@ $('body').delegate('select.product_names', 'change', function(event){
     else{
         $(obj).parents('tr').find('.list-cell__party_number input').val('').attr('readonly', false).trigger('change');
     }
+});
+
+jQuery('#material_inputs').on('afterAddRow', function(e, row, currentIndex) {
+    row.find('.list-cell__product_id button.toquv_raw_materials_id')
+        .attr('data-input-name', 'productdocumentitems-'+currentIndex+'-product_id');
 });
 JS;
 

@@ -7,6 +7,7 @@ $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'language' => 'uz',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
@@ -58,13 +59,12 @@ $config = [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-//            'class' => 'app\widgets\MultiLang\components\UrlManager',
-//            'languages' => ['uz','ru','tr'],
-//            'enableLanguageDetection' => false,
-//            'enableDefaultLanguageUrlCode' => true,
+            'class' => 'app\widgets\MultiLang\components\UrlManager',
+            'languages' => ['uz','ru','en'],
+            'enableLanguageDetection' => false,
+            'enableDefaultLanguageUrlCode' => true,
             'rules' => [
-                '<controller>/<slug:\w+>/<action>/<id:\d+>' => '<controller>/<action>',
-                '<controller>/<slug:\w+>/<action>' => '<controller>/<action>',
+                'product-document/<slug:\w+>/<action>' => 'product-document/<action>',
             ],
         ],
     ],
