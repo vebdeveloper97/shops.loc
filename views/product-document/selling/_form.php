@@ -68,8 +68,8 @@ use app\models\Product;
                             'title' => Yii::t('app', 'Products'),
                         ],
                         [
-                            'name' => 'incoming_price',
-                            'title' => Yii::t('app', 'Incoming Price').'<span style="color: orangered"> $</span>',
+                            'name' => 'selling_price',
+                            'title' => Yii::t('app', 'Selling Price').'<span style="color: orangered"> $</span>',
                             'options' => [
                                 'style' => 'width: 250px',
                             ],

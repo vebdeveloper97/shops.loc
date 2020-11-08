@@ -51,6 +51,7 @@ class ProductDocument extends BaseModel
             [['doc_type', 'created_at', 'status', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['doc_number'], 'string', 'max' => 255],
             [['doc_number'], 'unique'],
+            [['precent_price'], 'number'],
             [['date'], 'date', 'skipOnEmpty' => false, 'format' => 'php:Y-m-d'],
             /** Search Fields */
             [['start_date', 'end_date'], 'date'],

@@ -85,8 +85,8 @@ $this->params['breadcrumbs'][] = $this->title;
                         'title' => Yii::t('app', 'Products'),
                     ],
                     [
-                        'name' => 'incoming_price',
-                        'title' => Yii::t('app', 'Incoming Price').'<span style="color: orangered"> $</span>',
+                        'name' => 'selling_price',
+                        'title' => Yii::t('app', 'Selling Price'),
                         'options' => [
                             'style' => 'width: 250px',
                             'readonly' => true,

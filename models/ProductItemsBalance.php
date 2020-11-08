@@ -40,7 +40,7 @@ class ProductItemsBalance extends BaseModel
         return [
             [['product_id', 'product_doc_id', 'product_doc_items_id'], 'required'],
             [['product_id', 'type', 'product_doc_id', 'product_doc_items_id', 'status', 'created_at', 'updated_at', 'created_by'], 'integer'],
-            [['quantity', 'amount'], 'number'],
+            [['quantity', 'amount', 'party_number'], 'number'],
             [['product_doc_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductDocument::className(), 'targetAttribute' => ['product_doc_id' => 'id']],
             [['product_doc_items_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductDocumentItems::className(), 'targetAttribute' => ['product_doc_items_id' => 'id']],
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::className(), 'targetAttribute' => ['product_id' => 'id']],

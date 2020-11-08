@@ -41,7 +41,7 @@ class ProductDocumentItems extends BaseModel
             [['product_id', 'product_doc_id'], 'required'],
             [['product_id', 'product_doc_id', 'status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
             [['party_number'], 'string'],
-            [['incoming_price', 'quantity'], 'number'],
+            [['incoming_price', 'quantity', 'selling_price'], 'number'],
             [['product_doc_id'], 'exist', 'skipOnError' => true, 'targetClass' => ProductDocument::className(), 'targetAttribute' => ['product_doc_id' => 'id']],
             [['product_id'], 'exist', 'skipOnError' => true, 'targetClass' => Product::className(), 'targetAttribute' => ['product_id' => 'id']],
         ];

@@ -31,7 +31,6 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'name',
-            'partiy_number',
             'status',
             [
                 'attribute' => 'created_at',

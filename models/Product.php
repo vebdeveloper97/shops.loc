@@ -38,7 +38,7 @@ class Product extends BaseModel
         return [
             [['name'], 'required'],
             [['status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
-            [['name', 'partiy_number'], 'string', 'max' => 100],
+            [['name'], 'string', 'max' => 100],
         ];
     }
 
@@ -50,7 +50,6 @@ class Product extends BaseModel
         return [
             'id' => Yii::t('app', 'ID'),
             'name' => Yii::t('app', 'Name'),
-            'partiy_number' => Yii::t('app', 'Partiy Number'),
             'status' => Yii::t('app', 'Status'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),

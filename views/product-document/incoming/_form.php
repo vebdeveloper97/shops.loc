@@ -96,7 +96,7 @@ use app\models\Product;
                     ],
                     [
                         'name' => 'incoming_price',
-                        'title' => Yii::t('app', 'Incoming Price').'<span style="color: orangered"> $</span>',
+                        'title' => Yii::t('app', 'Incoming Price'),
                         'options' => [
                             'style' => 'width: 250px',
                         ],
@@ -212,31 +212,6 @@ function formProcess() {
             return false; // prevent default form submission
     });
 }
-
-$('body').delegate('select.product_names', 'change', function(event){
-    let name = $(this).val();
-    let obj = event.target;
-    if(name){
-        $.ajax({
-            data: {name: name},
-            type: 'GET',
-            url: "$partyAjax",
-            success: function (result){
-                if(result.status){
-                    $(obj).parents('tr').find('.list-cell__party_number input').val(result.part_number);
-                    $(obj).parents('tr').find('.list-cell__party_number input').attr('readonly', true);
-                    
-                }
-                else{
-                    alert('Malumot kelmadi');
-                }
-            }
-        });
-    }
-    else{
-        $(obj).parents('tr').find('.list-cell__party_number input').val('').attr('readonly', false).trigger('change');
-    }
-});
 
 jQuery('#material_inputs').on('afterAddRow', function(e, row, currentIndex) {
     row.find('.list-cell__product_id button.toquv_raw_materials_id')

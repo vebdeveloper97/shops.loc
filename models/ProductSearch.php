@@ -18,7 +18,7 @@ class ProductSearch extends Product
     {
         return [
             [['id', 'status', 'created_at', 'updated_at', 'created_by', 'updated_by'], 'integer'],
-            [['name', 'partiy_number'], 'safe'],
+            [['name'], 'safe'],
         ];
     }
 
@@ -66,8 +66,7 @@ class ProductSearch extends Product
             'updated_by' => $this->updated_by,
         ]);
 
-        $query->andFilterWhere(['like', 'name', $this->name])
-            ->andFilterWhere(['like', 'partiy_number', $this->partiy_number]);
+        $query->andFilterWhere(['like', 'name', $this->name]);
 
         return $dataProvider;
     }
