@@ -48,6 +48,7 @@ use yii\widgets\Pjax;
     $sellingPrice = 0;
     $profit = 0;
     $count = 0;
+    $sum = 0;
     ?>
     <?php $i = 1; if(isset($sqldataprovider)): ?>
         <div class="row">
@@ -74,6 +75,7 @@ use yii\widgets\Pjax;
                                 $sellingPrice = $sellingPrice + $val['selling_price'];
                                 $profit = $profit + $val['profit'];
                                 $count = $count + $val['qty_difference'];
+                                $sum = $sum + ($val['profit'] * $val['qty_difference']);
                             ?>
                                 <tr>
                                     <td>
@@ -119,7 +121,11 @@ use yii\widgets\Pjax;
                                 <strong><?=$sellingPrice?></strong>
                             </td>
                             <td>
-                                <strong>Foyda: <?php echo $profit * $count;?></strong>
+                                <strong>Foyda:
+                                    <?php
+                                       echo $sum;
+                                    ?>
+                                </strong>
                             </td>
                             <td>
                                 <strong><?=$count?> ta</strong>

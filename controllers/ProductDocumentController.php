@@ -104,7 +104,7 @@ class ProductDocumentController extends Controller
                 $available = null;
                 if(empty($data['product_id'])){
                     $all = true;
-                    $available = ProductItemsBalance::find()->where(['type' => 2])->groupBy(['product_id'])->orderBy(['id' => SORT_DESC])->asArray()->all();
+                    $available = ProductItemsBalance::find()->where(['type' => 2])->groupBy('product_id')->orderBy(['id' => SORT_DESC])->asArray()->all();
                 }
                 else $all = false;
 
