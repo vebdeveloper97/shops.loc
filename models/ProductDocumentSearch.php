@@ -87,7 +87,7 @@ class ProductDocumentSearch extends ProductDocument
             $product_id = $product['product_id'];
             $party_number = $product['party_number'];
             $sql = "
-                SELECT p.name as name, p.partiy_number as pnumber, pd.doc_number as doc_number, pd.date as date, pib.amount as amount, pib.quantity as quantity,
+                SELECT p.name as name, pib.party_number as pnumber, pd.doc_number as doc_number, pd.date as date, pib.amount as amount, pib.quantity as quantity,
                 pd.doc_type as type from product p
                 inner join product_document_items pdi on pdi.product_id = p.id
                 inner join product_items_balance pib on pib.product_doc_items_id = pdi.id
@@ -107,7 +107,7 @@ class ProductDocumentSearch extends ProductDocument
             if(!empty($product_id))
                 $sql .= " AND pib.product_id = $product_id";
             if(!empty($party_number))
-                $sql .= " AND p.partiy_number = {$party_number}";
+                $sql .= " AND pib.party_number = {$party_number}";
             $sql .= " ORDER BY pib.id ASC";
             $query = \Yii::$app->db->createCommand($sql)->queryAll();
             $count = count($query);

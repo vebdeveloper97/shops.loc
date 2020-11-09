@@ -169,7 +169,8 @@ class ProductDocumentController extends Controller
                             'product_doc_items_id' => $modelItem->id,
                             'quantity' => $modelItem->quantity,
                             'amount' => $modelItem->quantity,
-                            'type' => $type
+                            'type' => $type,
+                            'party_number' => $modelItem->party_number
                         ]);
                         if($itemBalance->save()){
                             $saved = true;
@@ -216,100 +217,75 @@ class ProductDocumentController extends Controller
                          * Partiya raqamiga qarab tekshirish
                          * */
                         if(!empty($modelItem['party_number'])){
-                            $products = ProductItemsBalance::find()
-                                ->where(['party_number' => $modelItem['party_number']])
-                                ->asArray()
-                                ->all();
-                            if(!empty($products)){
-                                $count = count($products);
-                                foreach ($products as $key => $product) {
-                                    if($product['quantity'] >= $modelItem['quantity']){
-                                        $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
-                                        $product['quantity'] = $modelItem['quantity'];
-                                        if($product->save()){
-                                            $saved = true;
-                                            break;
-                                        }
-                                        else{
-                                            $saved = false;
-                                            Yii::$app->session->setFlash('error', Yii::t('app', 'Not updated'));
-                                            break 2;
-                                        }
-                                    }
-                                    else{
-                                        if($count >= 2){
-                                            if($count - 1 == $key){
-                                                $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
-                                                if($modelItem['quantity'] < 0){
-                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'Error! The amount of product in stock is low'));
-                                                    $saved = false;
-                                                    break 2;
-                                                }
-                                                else{
-                                                    $product['amount'] = $modelItem['quantity'];
-                                                    if($product->save()){
-                                                        $saved = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            else{
-                                                $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
-                                                if($modelItem['quantity'] <= 0){
-                                                    $product['amount'] = 0;
-                                                    $product['status'] = BaseModel::STATUS_SAVED;
-                                                    if($product->save()){
-                                                        $saved = true;
-                                                        break;
-                                                    }
-                                                }
-                                                else{
-                                                    $product['amount'] = $modelItem['quantity'];
-                                                    if($product->save()){
-                                                        $saved = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else{
-                                            Yii::$app->session->setFlash('error', Yii::t('app', 'There is no such batch digital product'));
-                                            $saved = false;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            else{
-                                Yii::$app->session->setFlash('error', Yii::t('app', 'There is no such batch digital product'));
-                                $saved = false;
-                                break;
-                            }
-                        }
-                        else{
                             /** begin code
                              *  Maxsulotlar kirim qilinganmi yoqmi shuni tekshirish
                              * */
                             $products = ProductItemsBalance::find()
                                 ->where([
+                                    'party_number' => $modelItem['party_number'],
                                     'product_id' => $modelItem['product_id'],
                                     'type' => ProductDocument::DOCUMENT_TYPE_INCOMING,
                                     'status' => BaseModel::STATUS_ACTIVE
                                 ])
                                 ->all();
-
                             if(!empty($products)){
                                 /** begin code
                                  *
                                  * */
+                                $count = count($products);
                                 foreach ($products as $key => $product) {
-                                    $count = count($products);
                                     /** begin code
                                      *  Skladagi kirim bolgan maxsulot miqdoriga tekshirib beradi
                                      * */
-                                    if($modelItem['quantity'] >= $product['quantity']){
-                                        $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
-                                        if($modelItem['quantity'] < 0){
+                                    if($modelItem['quantity'] >= $product['amount']){
+                                        $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
+                                        if($key == $count-1){
+                                            if($modelItem['quantity'] < 0){
+                                                Yii::$app->session->setFlash('error', Yii::t('app', Yii::t('app', 'Error! The amount of product in stock is low')));
+                                                $saved = false;
+                                                break 2;
+                                            }
+                                            elseif($modelItem['quantity'] == 0){
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
+                                                    ],
+                                                    [
+                                                        'id' => $product['id'],
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    $saved = false;
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                    break 2;
+                                                }
+                                            }
+                                            else{
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    $saved = false;
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                    break 2;
+                                                }
+                                            }
+                                        }
+                                        elseif($modelItem['quantity'] < 0){
                                             $is = ProductItemsBalance::updateAll(
                                                 [
                                                     'amount' => 0,
@@ -353,15 +329,14 @@ class ProductDocumentController extends Controller
                                             $is = ProductItemsBalance::updateAll(
                                                 [
                                                     'amount' => $modelItem['quantity'],
-                                                    'status' => BaseModel::STATUS_SAVED
                                                 ],
                                                 [
                                                     'id' => $product['id']
                                                 ]
                                             );
                                             if($is){
-                                                $product['amount'] = $modelItem['quantity'];
                                                 $saved = true;
+                                                break;
                                             }
                                             else{
                                                 $saved = false;
@@ -372,8 +347,8 @@ class ProductDocumentController extends Controller
                                     }
                                     else{
                                         if($key == $count - 1){
-                                            $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
-                                            if($modelItem['quantity'] > 0){
+                                            $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
+                                            if($modelItem['quantity'] < 0){
                                                 Yii::$app->session->setFlash('error', Yii::t('app', Yii::t('app', 'Error! The amount of product in stock is low')));
                                                 $saved = false;
                                                 break 2;
@@ -414,16 +389,18 @@ class ProductDocumentController extends Controller
                                             }
                                         }
                                         else{
-                                            $modelItem['quantity'] = $product['quantity'] - $modelItem['quantity'];
+                                            $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
                                             if($modelItem['quantity'] < 0){
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
-                                                        'amount' => -1 * $modelItem['quantity']
+                                                        'amount' => -1 * $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
                                                     ],
                                                     [
                                                         'id' => $product['id']
                                                     ]
                                                 );
+                                                $modelItem = $modelItem['quantity'] * (-1);
                                                 if($is){
                                                     $saved = true;
                                                     break;
@@ -452,8 +429,249 @@ class ProductDocumentController extends Controller
                                             else{
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
-                                                        'amount' => 0,
-                                                        'status' => BaseModel::STATUS_SAVED,
+                                                        'amount' => $modelItem['quantity'],
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    /** end code
+                                     *  Skladagi kirim bolgan maxsulot miqdoriga tekshirib beradi
+                                     * */
+                                }
+                                /** end code
+                                 *
+                                 * */
+                            }
+                            else{
+                                Yii::$app->session->setFlash('error', Yii::t('app', 'Error! No such product was found in the warehouse'));
+                                $saved = false;
+                                break;
+                            }
+                            /** end code
+                             *  Maxsulotlar kirim qilinganmi yoqmi shuni tekshirish
+                             * */
+                        }
+                        else{
+                            /** begin code
+                             *  Maxsulotlar kirim qilinganmi yoqmi shuni tekshirish
+                             * */
+                            $products = ProductItemsBalance::find()
+                                ->where([
+                                    'product_id' => $modelItem['product_id'],
+                                    'type' => ProductDocument::DOCUMENT_TYPE_INCOMING,
+                                    'status' => BaseModel::STATUS_ACTIVE
+                                ])
+                                ->all();
+                            if(!empty($products)){
+                                /** begin code
+                                 *
+                                 * */
+                                $count = count($products);
+                                foreach ($products as $key => $product) {
+                                    /** begin code
+                                     *  Skladagi kirim bolgan maxsulot miqdoriga tekshirib beradi
+                                     * */
+                                    if($modelItem['quantity'] >= $product['amount']){
+                                        $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
+                                        if($key == $count-1){
+                                            if($modelItem['quantity'] < 0){
+                                                Yii::$app->session->setFlash('error', Yii::t('app', Yii::t('app', 'Error! The amount of product in stock is low')));
+                                                $saved = false;
+                                                break 2;
+                                            }
+                                            elseif($modelItem['quantity'] == 0){
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
+                                                    ],
+                                                    [
+                                                        'id' => $product['id'],
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    $saved = false;
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                    break 2;
+                                                }
+                                            }
+                                            else{
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    $saved = false;
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                    break 2;
+                                                }
+                                            }
+                                        }
+                                        elseif($modelItem['quantity'] < 0){
+                                            $is = ProductItemsBalance::updateAll(
+                                                [
+                                                    'amount' => 0,
+                                                    'status' => BaseModel::STATUS_SAVED
+                                                ],
+                                                [
+                                                    'id' => $product['id']
+                                                ]
+                                            );
+                                            if($is){
+                                                $modelItem['quantity'] = -1 * $modelItem['quantity'];
+                                                $saved = true;
+                                            }
+                                            else{
+                                                $saved = false;
+                                                Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                break 2;
+                                            }
+                                        }
+                                        elseif($modelItem['quantity'] == 0){
+                                            $is = ProductItemsBalance::updateAll(
+                                                [
+                                                    'amount' => $modelItem['quantity'],
+                                                    'status' => BaseModel::STATUS_SAVED
+                                                ],
+                                                [
+                                                    'id' => $product['id'],
+                                                ]
+                                            );
+                                            if($is){
+                                                $saved = true;
+                                                break;
+                                            }
+                                            else{
+                                                $saved = false;
+                                                Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                break 2;
+                                            }
+                                        }
+                                        else{
+                                            $is = ProductItemsBalance::updateAll(
+                                                [
+                                                    'amount' => $modelItem['quantity'],
+                                                ],
+                                                [
+                                                    'id' => $product['id']
+                                                ]
+                                            );
+                                            if($is){
+                                                $saved = true;
+                                                break;
+                                            }
+                                            else{
+                                                $saved = false;
+                                                Yii::$app->session->setFlash('error', Yii::t('app', 'No Updated'));
+                                                break 2;
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        if($key == $count - 1){
+                                            $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
+                                            if($modelItem['quantity'] < 0){
+                                                Yii::$app->session->setFlash('error', Yii::t('app', Yii::t('app', 'Error! The amount of product in stock is low')));
+                                                $saved = false;
+                                                break 2;
+                                            }
+                                            elseif($modelItem['quantity'] == 0){
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No updated'));
+                                                    $saved = false;
+                                                    break 2;
+                                                }
+                                            }
+                                            else{
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity']
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        else{
+                                            $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
+                                            if($modelItem['quantity'] < 0){
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => -1 * $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                $modelItem = $modelItem['quantity'] * (-1);
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                                else{
+                                                    Yii::$app->session->setFlash('error', Yii::t('app', 'No updated'));
+                                                    $saved = false;
+                                                    break;
+                                                }
+                                            }
+                                            elseif($modelItem['quantity'] == 0){
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
+                                                        'status' => BaseModel::STATUS_SAVED
+                                                    ],
+                                                    [
+                                                        'id' => $product['id']
+                                                    ]
+                                                );
+                                                if($is){
+                                                    $saved = true;
+                                                    break;
+                                                }
+                                            }
+                                            else{
+                                                $is = ProductItemsBalance::updateAll(
+                                                    [
+                                                        'amount' => $modelItem['quantity'],
                                                     ],
                                                     [
                                                         'id' => $product['id']
@@ -490,8 +708,26 @@ class ProductDocumentController extends Controller
                         /** begin code
                          *  Sotilgan maxsulotni miqdorini saqlash
                          * */
-                        $modelItem['quantity'] = $sellingCount;
-                        VarDumper::dump($modelItem,10,true);die();
+                        $itemBalances = new ProductItemsBalance();
+                        $itemBalances->setAttributes([
+                            'product_id' => $modelItem['product_id'],
+                            'product_doc_id' => $modelItem['product_doc_id'],
+                            'product_doc_items_id' => $modelItem['id'],
+                            'quantity' => $sellingCount,
+                            'amount' => -1 * $sellingCount,
+                            'type' => $type,
+                            'party_number' => $modelItem['party_number']?$modelItem['party_number']:''
+                        ]);
+
+                        if($itemBalances->save() && $saved){
+                            $saved = true;
+                            unset($itemBalances);
+                        }
+                        else{
+                            $saved = true;
+                            Yii::$app->session->setFlash('error', Yii::t('app', 'No Saved'));
+                            break;
+                        }
                         /** end code
                          *  Sotilgan maxsulotni miqdorini saqlash
                          * */
@@ -502,6 +738,9 @@ class ProductDocumentController extends Controller
                      * */
 
                 }
+
+                $model->status = BaseModel::STATUS_SAVED;
+                $saved = $model->save() && $saved;
 
                 if($saved){
                     $transaction->commit();
@@ -710,7 +949,8 @@ class ProductDocumentController extends Controller
                                 $items = new ProductDocumentItems();
                                 $items->setAttributes([
                                     'product_id' => $productItem['product_id'],
-                                    'incoming_price' => $productItem['incoming_price'],
+                                    'incoming_price' => $productItem['incoming_price']?$productItem['incoming_price']:'',
+                                    'selling_price' => $productItem['selling_price']?$productItem['selling_price']:'',
                                     'quantity' => $productItem['quantity'],
                                     'product_doc_id' => $model->id,
                                     'party_number' => $productItem['party_number'],
