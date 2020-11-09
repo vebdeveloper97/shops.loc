@@ -27,7 +27,7 @@ use app\models\Product;
             <div class="col-sm-6">
                 <?= $form->field($model, 'date')->widget(\kartik\date\DatePicker::class, [
                     'options' => [
-                        'value' => date('d.m.yy'),
+                        'value' => $model->isNewRecord?date('d.m.yy'):$model->date,
                     ],
                     'pluginOptions' => [
                         'autoclose'=>true,

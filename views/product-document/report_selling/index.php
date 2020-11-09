@@ -12,7 +12,7 @@ use yii\widgets\Pjax;
 ?>
 <div class="row">
     <?php $form = \yii\bootstrap\ActiveForm::begin(); ?>
-    <div class="col-sm-3">
+    <div class="col-sm-4">
         <?=$form->field($model, 'start_date')->widget(\kartik\date\DatePicker::class, [
             'pluginOptions' => [
                 'format' => 'dd.mm.yyyy',
@@ -21,7 +21,7 @@ use yii\widgets\Pjax;
             ]
         ]); ?>
     </div>
-    <div class="col-sm-3">
+    <div class="col-sm-4">
         <?=$form->field($model, 'end_date')->widget(\kartik\date\DatePicker::class, [
             'pluginOptions' => [
                 'format' => 'dd.mm.yyyy',
@@ -30,10 +30,7 @@ use yii\widgets\Pjax;
             ]
         ]); ?>
     </div>
-    <div class="col-sm-3">
-        <?=$form->field($model, 'party_number'); ?>
-    </div>
-    <div class="col-sm-3">
+    <div class="col-sm-4">
         <?=$form->field($model, 'product_id')->widget(\kartik\select2\Select2::class, [
             'data' => \app\models\Product::getArrayHelp(),
             'pluginOptions' => [

@@ -1349,6 +1349,7 @@ class ProductDocumentController extends Controller
         $docType = ProductDocument::hasDocTypeLabel($this->slug);
         $model = $this->findModel($id,$docType);
         $modelItems = $model->productDocumentItems?$model->productDocumentItems:[new ProductDocumentItems()];
+        $model->date = date('d.m.Y', strtotime($model->date));
 
         if($model->load(Yii::$app->request->post())) {
             if($docType == ProductDocument::DOCUMENT_TYPE_INCOMING || $docType == ProductDocument::DOCUMENT_TYPE_SELLING){

@@ -55,7 +55,8 @@ class ProductDocument extends BaseModel
             [['date'], 'date', 'skipOnEmpty' => false, 'format' => 'php:Y-m-d'],
             /** Search Fields */
             [['start_date', 'end_date'], 'date'],
-            [['product_id', 'party_number'], 'integer']
+            [['product_id'], 'integer'],
+            [['party_number'], 'string']
         ];
     }
 
