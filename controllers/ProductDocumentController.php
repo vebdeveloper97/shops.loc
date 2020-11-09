@@ -6,6 +6,7 @@ use app\models\BaseModel;
 use app\models\Product;
 use app\models\ProductDocumentItems;
 use app\models\ProductItemsBalance;
+use app\models\Reports;
 use app\modules\wms\models\WmsDocument;
 use Yii;
 use app\models\ProductDocument;
@@ -213,9 +214,11 @@ class ProductDocumentController extends Controller
                      * */
                     foreach ($modelItems as $modelItem) {
                         $sellingCount = $modelItem['quantity'];
+
                         /** begin code
                          * Partiya raqamiga qarab tekshirish
                          * */
+
                         if(!empty($modelItem['party_number'])){
                             /** begin code
                              *  Maxsulotlar kirim qilinganmi yoqmi shuni tekshirish
@@ -237,6 +240,16 @@ class ProductDocumentController extends Controller
                                     /** begin code
                                      *  Skladagi kirim bolgan maxsulot miqdoriga tekshirib beradi
                                      * */
+
+                                    /** begin code
+                                     *  Report uchun
+                                     * */
+                                    $documentItems = ProductDocumentItems::findOne($product['product_doc_items_id']);
+                                    $difference = $modelItem['quantity'];
+                                    /** end code
+                                     *  Report uchun
+                                     * */
+
                                     if($modelItem['quantity'] >= $product['amount']){
                                         $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
                                         if($key == $count-1){
@@ -257,6 +270,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $product['amount'],
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                                 else{
@@ -276,6 +309,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                                 else{
@@ -286,6 +339,26 @@ class ProductDocumentController extends Controller
                                             }
                                         }
                                         elseif($modelItem['quantity'] < 0){
+
+                                            /** begin code
+                                             *  Resport save
+                                             * */
+                                            $report = new Reports();
+                                            $report->setAttributes([
+                                                'product_id' => $product['product_id'],
+                                                'product_doc_id' => $model->id,
+                                                'incoming_price' => $documentItems->incoming_price,
+                                                'selling_price' => $modelItem['selling_price'],
+                                                'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                'qty_difference' => $product['amount'],
+                                                'party_number' => $documentItems->party_number,
+                                            ]);
+
+                                            $saved = $report->save() && $saved;
+                                            /** end code
+                                             *  Resport save
+                                             * */
+
                                             $is = ProductItemsBalance::updateAll(
                                                 [
                                                     'amount' => 0,
@@ -317,6 +390,26 @@ class ProductDocumentController extends Controller
                                             );
                                             if($is){
                                                 $saved = true;
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $difference,
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 break;
                                             }
                                             else{
@@ -336,6 +429,26 @@ class ProductDocumentController extends Controller
                                             );
                                             if($is){
                                                 $saved = true;
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $difference,
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 break;
                                             }
                                             else{
@@ -365,6 +478,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                                 else{
@@ -384,6 +517,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                             }
@@ -391,9 +544,29 @@ class ProductDocumentController extends Controller
                                         else{
                                             $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
                                             if($modelItem['quantity'] < 0){
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $product['amount'],
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save();
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
-                                                        'amount' => -1 * $modelItem['quantity'],
+                                                        'amount' => 0,
                                                         'status' => BaseModel::STATUS_SAVED
                                                     ],
                                                     [
@@ -423,6 +596,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                             }
@@ -437,6 +630,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                             }
@@ -479,6 +692,16 @@ class ProductDocumentController extends Controller
                                     /** begin code
                                      *  Skladagi kirim bolgan maxsulot miqdoriga tekshirib beradi
                                      * */
+
+                                    /** begin code
+                                     *  Report uchun
+                                     * */
+                                    $documentItems = ProductDocumentItems::findOne($product['product_doc_items_id']);
+                                    $difference = $modelItem['quantity'];
+                                    /** end code
+                                     *  Report uchun
+                                     * */
+
                                     if($modelItem['quantity'] >= $product['amount']){
                                         $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
                                         if($key == $count-1){
@@ -488,6 +711,26 @@ class ProductDocumentController extends Controller
                                                 break 2;
                                             }
                                             elseif($modelItem['quantity'] == 0){
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $product['amount'],
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
                                                         'amount' => $modelItem['quantity'],
@@ -518,6 +761,26 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                        'party_number' => $documentItems->party_number,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                                 else{
@@ -528,6 +791,26 @@ class ProductDocumentController extends Controller
                                             }
                                         }
                                         elseif($modelItem['quantity'] < 0){
+
+                                            /** begin code
+                                             *  Resport save
+                                             * */
+                                            $report = new Reports();
+                                            $report->setAttributes([
+                                                'product_id' => $product['product_id'],
+                                                'product_doc_id' => $model->id,
+                                                'incoming_price' => $documentItems->incoming_price,
+                                                'selling_price' => $modelItem['selling_price'],
+                                                'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                'qty_difference' => $product['amount'],
+                                                'party_number' => $documentItems->party_number,
+                                            ]);
+
+                                            $saved = $report->save() && $saved;
+                                            /** end code
+                                             *  Resport save
+                                             * */
+
                                             $is = ProductItemsBalance::updateAll(
                                                 [
                                                     'amount' => 0,
@@ -548,6 +831,26 @@ class ProductDocumentController extends Controller
                                             }
                                         }
                                         elseif($modelItem['quantity'] == 0){
+
+                                            /** begin code
+                                             *  Resport save
+                                             * */
+                                            $report = new Reports();
+                                            $report->setAttributes([
+                                                'product_id' => $product['product_id'],
+                                                'product_doc_id' => $model->id,
+                                                'incoming_price' => $documentItems->incoming_price,
+                                                'selling_price' => $modelItem['selling_price'],
+                                                'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                'qty_difference' => $product['amount'],
+                                                'party_number' => $documentItems->party_number,
+                                            ]);
+
+                                            $saved = $report->save() && $saved;
+                                            /** end code
+                                             *  Resport save
+                                             * */
+
                                             $is = ProductItemsBalance::updateAll(
                                                 [
                                                     'amount' => $modelItem['quantity'],
@@ -578,6 +881,26 @@ class ProductDocumentController extends Controller
                                             );
                                             if($is){
                                                 $saved = true;
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $difference,
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 break;
                                             }
                                             else{
@@ -596,6 +919,25 @@ class ProductDocumentController extends Controller
                                                 break 2;
                                             }
                                             elseif($modelItem['quantity'] == 0){
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $product['amount'],
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
                                                         'amount' => $modelItem['quantity'],
@@ -626,6 +968,25 @@ class ProductDocumentController extends Controller
                                                 );
                                                 if($is){
                                                     $saved = true;
+
+                                                    /** begin code
+                                                     *  Resport save
+                                                     * */
+                                                    $report = new Reports();
+                                                    $report->setAttributes([
+                                                        'product_id' => $product['product_id'],
+                                                        'product_doc_id' => $model->id,
+                                                        'incoming_price' => $documentItems->incoming_price,
+                                                        'selling_price' => $modelItem['selling_price'],
+                                                        'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                        'qty_difference' => $difference,
+                                                    ]);
+
+                                                    $saved = $report->save() && $saved;
+                                                    /** end code
+                                                     *  Resport save
+                                                     * */
+
                                                     break;
                                                 }
                                             }
@@ -633,6 +994,25 @@ class ProductDocumentController extends Controller
                                         else{
                                             $modelItem['quantity'] = $product['amount'] - $modelItem['quantity'];
                                             if($modelItem['quantity'] < 0){
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $product['amount'],
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
                                                         'amount' => -1 * $modelItem['quantity'],
@@ -654,6 +1034,26 @@ class ProductDocumentController extends Controller
                                                 }
                                             }
                                             elseif($modelItem['quantity'] == 0){
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $product['amount'],
+                                                    'party_number' => $documentItems->party_number,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
                                                         'amount' => $modelItem['quantity'],
@@ -669,6 +1069,25 @@ class ProductDocumentController extends Controller
                                                 }
                                             }
                                             else{
+
+                                                /** begin code
+                                                 *  Resport save
+                                                 * */
+                                                $report = new Reports();
+                                                $report->setAttributes([
+                                                    'product_id' => $product['product_id'],
+                                                    'product_doc_id' => $model->id,
+                                                    'incoming_price' => $documentItems->incoming_price,
+                                                    'selling_price' => $modelItem['selling_price'],
+                                                    'profit' => $modelItem['selling_price'] - $documentItems->incoming_price,
+                                                    'qty_difference' => $difference,
+                                                ]);
+
+                                                $saved = $report->save() && $saved;
+                                                /** end code
+                                                 *  Resport save
+                                                 * */
+
                                                 $is = ProductItemsBalance::updateAll(
                                                     [
                                                         'amount' => $modelItem['quantity'],
@@ -701,6 +1120,7 @@ class ProductDocumentController extends Controller
                              *  Maxsulotlar kirim qilinganmi yoqmi shuni tekshirish
                              * */
                         }
+
                         /** end code
                          * Partiya raqamiga qarab tekshirish
                          * */
@@ -708,6 +1128,7 @@ class ProductDocumentController extends Controller
                         /** begin code
                          *  Sotilgan maxsulotni miqdorini saqlash
                          * */
+
                         $itemBalances = new ProductItemsBalance();
                         $itemBalances->setAttributes([
                             'product_id' => $modelItem['product_id'],

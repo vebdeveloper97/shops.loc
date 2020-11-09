@@ -86,7 +86,32 @@ class ProductDocumentSearch extends ProductDocument
             $end_date = $product['end_date'];
             $product_id = $product['product_id'];
             $party_number = $product['party_number'];
-            $sql = "
+            if($type == 2){
+                $sql = "
+                    SELECT p.name as name, r.incoming_price, r.selling_price, r.profit, r.qty_difference, pd.doc_number, 
+                    pd.date from product p
+                    inner join reports r on r.product_id = p.id
+                    inner join product_document pd on pd.id = r.product_doc_id
+                    WHERE pd.doc_type = {$type}
+                ";
+                if(!empty($start_date))
+                {
+                    $start_date = date('Y-m-d', strtotime($start_date));
+                    $sql .= " AND pd.date >= '{$start_date}'";
+                }
+                if(!empty($end_date))
+                {
+                    $end_date = date('Y-m-d', strtotime($end_date));
+                    $sql .= " AND pd.date <= '{$end_date}'";
+                }
+                if(!empty($product_id))
+                    $sql .= " AND r.product_id = $product_id";
+                if(!empty($party_number))
+                    $sql .= " AND r.party_number = {$party_number}";
+                $sql .= " ORDER BY r.id ASC";
+            }
+            elseif($type == 1){
+                $sql = "
                 SELECT p.name as name, pib.party_number as pnumber, pd.doc_number as doc_number, pd.date as date, pib.amount as amount, pib.quantity as quantity,
                 pd.doc_type as type from product p
                 inner join product_document_items pdi on pdi.product_id = p.id
@@ -94,23 +119,24 @@ class ProductDocumentSearch extends ProductDocument
                 inner join product_document pd on pd.id = pdi.product_doc_id
                 WHERE pd.doc_type = {$type}            
             ";
-            if(!empty($start_date))
-            {
-                $start_date = date('Y-m-d', strtotime($start_date));
-                $sql .= " AND pd.date >= '{$start_date}'";
+                if(!empty($start_date))
+                {
+                    $start_date = date('Y-m-d', strtotime($start_date));
+                    $sql .= " AND pd.date >= '{$start_date}'";
+                }
+                if(!empty($end_date))
+                {
+                    $end_date = date('Y-m-d', strtotime($end_date));
+                    $sql .= " AND pd.date <= '{$end_date}'";
+                }
+                if(!empty($product_id))
+                    $sql .= " AND pib.product_id = $product_id";
+                if(!empty($party_number))
+                    $sql .= " AND pib.party_number = {$party_number}";
+                $sql .= " ORDER BY pib.id ASC";
+                $query = \Yii::$app->db->createCommand($sql)->queryAll();
+                $count = count($query);
             }
-            if(!empty($end_date))
-            {
-                $end_date = date('Y-m-d', strtotime($end_date));
-                $sql .= " AND pd.date <= '{$end_date}'";
-            }
-            if(!empty($product_id))
-                $sql .= " AND pib.product_id = $product_id";
-            if(!empty($party_number))
-                $sql .= " AND pib.party_number = {$party_number}";
-            $sql .= " ORDER BY pib.id ASC";
-            $query = \Yii::$app->db->createCommand($sql)->queryAll();
-            $count = count($query);
             $dataProvider = new SqlDataProvider([
                 'sql' => $sql,
                 'totalCount' => $count,
